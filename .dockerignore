@@ -1,0 +1,23 @@
+# Git metadata
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+
+# Editor files
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+tmp
+temp
+
+# Documentation not needed in image context
+README.md
