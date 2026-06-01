@@ -27,6 +27,8 @@ The setup consists of two services:
 
 ```text
 .
+├── docs/
+│   └── <wordpress Checkliste>
 ├── .dockerignore
 ├── .gitignore
 ├── docker-compose.yaml
