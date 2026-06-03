@@ -1,8 +1,11 @@
 # WordPress Docker Compose Setup
 
+This repository provides a Docker Compose setup for running WordPress with a separate MariaDB database service.
+
+The project demonstrates a reproducible multi-container setup with external configuration, persistent database storage, a shared Docker network, and automatic container restart behavior.
+
 ## Table of Contents
 
-* [Repository Description](#repository-description)
 * [Repository Structure](#repository-structure)
 * [Prerequisites](#prerequisites)
 * [Quickstart](#quickstart)
@@ -12,37 +15,18 @@
 * [Security Notes](#security-notes)
 * [Troubleshooting](#troubleshooting)
 
-## Repository Description
-
-This repository contains a Docker Compose setup for running a WordPress application with a separate MariaDB database service.
-
-The purpose of this project is to provide a reproducible multi-container setup with environment-based configuration, persistent database storage, an isolated Docker network, and automatic container restart behavior.
-
-The setup consists of two services:
-
-* `wordpress` - runs the WordPress application
-* `db` - runs the MariaDB database used by WordPress
-
 ## Repository Structure
 
 ```text
 .
 ├── docs/
-│   └── <wordpress Checkliste>
 ├── .dockerignore
 ├── .gitignore
 ├── docker-compose.yaml
 ├── example.env
 └── README.md
 ```
-
-| File                  | Description                                                                                |
-| --------------------- | ------------------------------------------------------------------------------------------ |
-| `.dockerignore`       | Excludes local and unnecessary files from the Docker build context.                        |
-| `.gitignore`          | Prevents local environment files and temporary files from being committed.                 |
-| `docker-compose.yaml` | Defines the WordPress and MariaDB services, volumes, network, ports, and restart behavior. |
-| `example.env`         | Provides a safe example configuration without real secrets.                                |
-| `README.md`           | Contains the project documentation and usage instructions.                                 |
+The docs/ directory contains the project checklist. The main runtime setup is defined in docker-compose.yaml, while example.env provides a safe environment template without real secrets.
 
 ## Prerequisites
 
@@ -52,7 +36,7 @@ The following tools are required:
 * Docker
 * Docker Compose
 
-The project is intended to be deployed on a Linux-based cloud VM. WordPress is exposed on port `8080`.
+The setup can be run on any machine with Docker and Docker Compose installed.
 
 ## Quickstart
 
@@ -90,23 +74,12 @@ docker compose ps
 Open WordPress in the browser:
 
 ```text
-http://<VM-IP>:8080
+http://localhost:8080
 ```
 
-Replace `<VM-IP>` with the public IP address of the cloud VM.
+When running the setup on a cloud VM, replace `localhost` with the public VM IP address.
 
 ## Usage
-
-### Start the setup
-
-```bash
-docker compose up -d
-```
-
-This starts both services:
-
-* `wordpress`
-* `db`
 
 ### Stop the setup
 
@@ -149,27 +122,14 @@ docker compose logs db --tail=50
 docker compose down -v
 ```
 
-⚠️This removes the database volume and deletes the WordPress installation data. Use this only when a full reset is intended.
+> [!WARNING]
+> `docker compose down -v` removes the database volume and deletes the WordPress installation data. Use it only when a full reset is intended.
 
 ## Configuration
 
 The project uses environment variables from a local `.env` file.
 
 The repository contains `example.env` as a template. The real `.env` file must be created locally and must not be committed.
-
-Important variables:
-
-| Variable                | Description                                                                          |
-| ----------------------- | ------------------------------------------------------------------------------------ |
-| `WORDPRESS_PORT`        | Host port used to access WordPress from the browser.                                 |
-| `WORDPRESS_DB_HOST`     | Database host used by WordPress. In this setup it is `db`, the Compose service name. |
-| `WORDPRESS_DB_NAME`     | Database name used by WordPress.                                                     |
-| `WORDPRESS_DB_USER`     | Database user used by WordPress.                                                     |
-| `WORDPRESS_DB_PASSWORD` | Database password used by WordPress.                                                 |
-| `MYSQL_DATABASE`        | Database created by MariaDB.                                                         |
-| `MYSQL_USER`            | MariaDB user for the WordPress database.                                             |
-| `MYSQL_PASSWORD`        | Password for the MariaDB WordPress user.                                             |
-| `MYSQL_ROOT_PASSWORD`   | Root password for MariaDB.                                                           |
 
 The following values must match:
 
@@ -179,31 +139,23 @@ WORDPRESS_DB_USER = MYSQL_USER
 WORDPRESS_DB_PASSWORD = MYSQL_PASSWORD
 ```
 
-The WordPress service connects to the database service by using the Compose service name:
+If these values do not match, WordPress will not be able to connect to the database.
+
+WordPress connects to the database by using the Compose service name:
 
 ```text
 WORDPRESS_DB_HOST=db
 ```
 
-The database data is persisted in the named Docker volume:
+Only WordPress is exposed through the configured host port. The database service is used internally through the Docker network.
 
-```text
-db_data
-```
+The database data is persisted through a Docker volume.
 
-Both services are attached to the same Docker network:
-
-```text
-wordpress_network
-```
-
-The containers use the following restart policy:
+Both services use the following restart policy:
 
 ```text
 restart: unless-stopped
 ```
-
-This allows Docker to restart the containers automatically if a service process terminates unexpectedly.
 
 ## Testing and Verification
 
@@ -226,7 +178,15 @@ wordpress-docker-compose-wordpress-1   Up   0.0.0.0:8080->80/tcp
 wordpress-docker-compose-db-1          Up   3306/tcp
 ```
 
-### Verify that WordPress is reachable on the VM
+### Verify WordPress access
+
+Local access:
+
+```text
+http://localhost:8080
+```
+
+Cloud VM access:
 
 ```text
 http://<VM-IP>:8080
@@ -243,7 +203,7 @@ docker compose down
 docker compose up -d
 ```
 
-After the restart, the WordPress installation and admin login were still available. This confirms that the database data is persisted through the named Docker volume.
+After the restart, the WordPress installation and admin login were still available.
 
 ### Verify restart behavior
 
@@ -283,7 +243,6 @@ RestartPolicy=unless-stopped Status=running RestartCount=1 ExitCode=0
 * `example.env` contains only placeholder values.
 * Real credentials must be provided only through a local `.env` file or through the required project submission channel.
 * The database service is not exposed to the public internet.
-* Only WordPress is exposed through the configured host port.
 
 ## Troubleshooting
 
@@ -297,7 +256,7 @@ Check running containers:
 docker ps
 ```
 
-Check whether the VM listens on port `8080`:
+Check whether the machine listens on port `8080`:
 
 ```bash
 sudo ss -lntp | grep :8080
@@ -319,14 +278,7 @@ Check logs:
 docker compose logs db --tail=80
 docker compose logs wordpress --tail=80
 ```
-
-Verify that the following values match in `.env`:
-
-```text
-WORDPRESS_DB_NAME = MYSQL_DATABASE
-WORDPRESS_DB_USER = MYSQL_USER
-WORDPRESS_DB_PASSWORD = MYSQL_PASSWORD
-```
+Verify that the matching values are correctly set as described in [Configuration](#configuration).
 
 If the database volume was already initialized with older credentials and no important data must be kept, reset the setup:
 
