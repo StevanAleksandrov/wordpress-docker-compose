@@ -19,5 +19,5 @@ Thumbs.db
 tmp
 temp
 
-# Documentation not needed in image context
+# Documentation not needed in Docker build context
 README.md
